@@ -15,6 +15,36 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+// ─── Posts ───────────────────────────────────────────────────────────────────
+
+export interface Post {
+  id: string;
+  title: string;
+  image_url: string;
+  author_name: string;
+  category: string; // "content" | "product"
+  tags: string[];
+  like_count: number;
+  created_at: string;
+  // Product-specific (optional)
+  price?: string;
+  brand?: string;
+}
+
+/**
+ * Fetches all posts from Supabase, ordered newest first.
+ * Used by TanStack Query hooks in lib/posts.ts.
+ */
+export async function fetchPostsFeed(): Promise<Post[]> {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as Post[];
+}
+
 // ─── Onboarding ───────────────────────────────────────────────────────────────
 
 export interface OnboardingData {
