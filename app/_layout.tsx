@@ -48,14 +48,14 @@ export default function RootLayout() {
         <ThemeProvider
           value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
         >
-          <Stack>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
             <Stack.Screen
-              name="index"
+              name="(onboarding)"
               options={{ headerShown: false, gestureEnabled: false }}
-            />
-            <Stack.Screen
-              name="modal"
-              options={{ presentation: "modal", title: "Modal" }}
             />
           </Stack>
           <StatusBar style="auto" />

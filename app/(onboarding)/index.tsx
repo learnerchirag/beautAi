@@ -15,44 +15,42 @@ const STEP_TITLES = ["Brands I love", "My routine time", "My vibe"];
 
 const STEP_XP = [10, 30, 40];
 
+function getRoutineLabel(minutes: number): string {
+  if (minutes <= 5) return "0-5";
+  if (minutes <= 15) return "5-15";
+  if (minutes <= 30) return "15-30";
+  return "30+";
+}
+
 export default function OnboardingScreen() {
-  const [currentStep, setCurrentStep] = useState(1); // 1-indexed
+  const [currentStep, setCurrentStep] = useState(1);
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [routineMinutes, setRoutineMinutes] = useState(0);
   const [selectedVibe, setSelectedVibe] = useState<string | null>(null);
 
   const totalXP = useMemo(() => {
     let xp = 0;
-    console.log(selectedBrands, routineMinutes, selectedVibe);
     if (selectedBrands.size > 0) xp += STEP_XP[0];
     if (routineMinutes > 0) xp += STEP_XP[1];
     if (selectedVibe) xp += STEP_XP[2];
-    console.log(xp);
     return xp;
   }, [selectedBrands, routineMinutes, selectedVibe]);
 
   const handleToggleBrand = useCallback((brand: string) => {
     setSelectedBrands((prev) => {
       const next = new Set(prev);
-      if (next.has(brand)) {
-        next.delete(brand);
-      } else {
-        next.add(brand);
-      }
+      if (next.has(brand)) next.delete(brand);
+      else next.add(brand);
       return next;
     });
   }, []);
 
   const handleNext = useCallback(() => {
-    if (currentStep < TOTAL_STEPS) {
-      setCurrentStep((s) => s + 1);
-    }
+    if (currentStep < TOTAL_STEPS) setCurrentStep((s) => s + 1);
   }, [currentStep]);
 
   const handlePrev = useCallback(() => {
-    if (currentStep > 1) {
-      setCurrentStep((s) => s - 1);
-    }
+    if (currentStep > 1) setCurrentStep((s) => s - 1);
   }, [currentStep]);
 
   const handleReset = useCallback(() => {
@@ -65,14 +63,20 @@ export default function OnboardingScreen() {
     if (currentStep < TOTAL_STEPS) {
       handleNext();
     } else {
-      // All steps done — navigate to main app
-      router.replace("/(tabs)");
+      // All 3 steps done → navigate to the completion screen
+      router.push({
+        pathname: "/onboarding-complete",
+        params: {
+          brands: JSON.stringify(Array.from(selectedBrands)),
+          routine_time: getRoutineLabel(routineMinutes),
+          beauty_vibe: selectedVibe ?? "",
+        },
+      });
     }
-  }, [currentStep, handleNext]);
+  }, [currentStep, handleNext, selectedBrands, routineMinutes, selectedVibe]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      {/* Top section: progress + header + XP badge */}
       <View style={{ paddingHorizontal: 16, paddingTop: 8, gap: 12 }}>
         <ProgressBar totalSteps={TOTAL_STEPS} currentStep={currentStep} />
         <StepHeader
@@ -89,7 +93,6 @@ export default function OnboardingScreen() {
         )}
       </View>
 
-      {/* Step content */}
       <View
         style={{
           flex: 1,
@@ -113,7 +116,6 @@ export default function OnboardingScreen() {
         )}
       </View>
 
-      {/* Bottom controls */}
       <BottomControls
         onReset={handleReset}
         onSubmit={handleSubmit}
