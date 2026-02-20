@@ -1,5 +1,7 @@
 import Completion from "@/components/onboarding/Completion";
+import { ONBOARDING_STORAGE_KEY } from "@/hooks/use-auth";
 import { OnboardingData, updateOnboardingProfile } from "@/lib/supabase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect } from "react";
 import { SafeAreaView } from "react-native";
@@ -23,6 +25,10 @@ export default function OnboardingCompleteScreen() {
       const result = await updateOnboardingProfile(data);
       if (result?.error) {
         console.warn("Onboarding save error:", result.error);
+      } else {
+        // Mark onboarding as complete in AsyncStorage so future launches
+        // skip this flow and go directly to the main tabs
+        await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
       }
     };
 
