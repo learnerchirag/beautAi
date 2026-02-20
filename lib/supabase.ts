@@ -45,6 +45,22 @@ export async function fetchPostsFeed(): Promise<Post[]> {
   return (data ?? []) as Post[];
 }
 
+// ─── Profile ─────────────────────────────────────────────────────────────────
+
+/**
+ * Returns whether onboarding has been completed for a given user ID.
+ * Used by the login flow to decide which screen to navigate to.
+ */
+export async function fetchOnboardingStatus(userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("onboarding_complete")
+    .eq("id", userId)
+    .single();
+
+  return data?.onboarding_complete === true;
+}
+
 // ─── Onboarding ───────────────────────────────────────────────────────────────
 
 export interface OnboardingData {

@@ -1,5 +1,9 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQuery } from "@tanstack/react-query";
 
+import { AUTH_STORAGE_KEY } from "@/hooks/use-auth";
+import { useAppStore } from "@/store/appStore";
+import { fetchUserProfile } from "./profile";
 import { fetchPostsFeed, Post } from "./supabase";
 
 // ─── Feed Filters ─────────────────────────────────────────────────────────────
@@ -15,12 +19,13 @@ export type FeedFilter = (typeof FEED_FILTERS)[number];
 
 // ─── Scoring Algorithm ────────────────────────────────────────────────────────
 
-export interface UserProfile {
+/** Subset of UserProfile needed purely for feed scoring. */
+interface ScoringProfile {
   beauty_vibe?: string;
   favorite_brands?: string[];
 }
 
-export function scorePosts(posts: Post[], profile: UserProfile): Post[] {
+export function scorePosts(posts: Post[], profile: ScoringProfile): Post[] {
   if (!posts.length) return posts;
 
   const maxLikes = Math.max(...posts.map((p) => p.like_count), 1);
@@ -61,10 +66,31 @@ export function sortByTrending(posts: Post[]): Post[] {
 
 export const POSTS_QUERY_KEY = ["posts", "feed"] as const;
 
+/**
+ * Fetches the post feed and — if the Zustand store doesn't yet have a
+ * userProfile — loads and caches it before returning so that FeedGrid
+ * can score posts immediately with a real profile.
+ */
 export function useFeedQuery() {
+  const { userProfile, setUserProfile } = useAppStore();
+
   return useQuery({
     queryKey: POSTS_QUERY_KEY,
-    queryFn: fetchPostsFeed,
+    queryFn: async () => {
+      // Ensure a profile is in Zustand before we return data
+      if (!userProfile) {
+        const userId = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
+        if (userId) {
+          try {
+            const profile = await fetchUserProfile(userId);
+            await setUserProfile(profile);
+          } catch {
+            // Profile fetch failed — scoring will degrade gracefully
+          }
+        }
+      }
+      return fetchPostsFeed();
+    },
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 }

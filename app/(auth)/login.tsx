@@ -15,8 +15,10 @@ import { SecondaryButton } from "@/components/buttons/SecondaryButton";
 import { TextButton } from "@/components/buttons/TextButton";
 import { TextInput } from "@/components/inputs/TextInput";
 
-import { AUTH_STORAGE_KEY } from "@/hooks/use-auth";
-import { supabase } from "@/lib/supabase";
+import { AUTH_STORAGE_KEY, ONBOARDING_STORAGE_KEY } from "@/hooks/use-auth";
+import { fetchUserProfile } from "@/lib/profile";
+import { fetchOnboardingStatus, supabase } from "@/lib/supabase";
+import { useAppStore } from "@/store/appStore";
 
 // ─── Validation helpers ────────────────────────────────────────────────────────
 
@@ -89,6 +91,8 @@ export default function LoginScreen() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const { setUserId, setUserProfile } = useAppStore();
+
   const handleGetStarted = async () => {
     // Validate
     const eErr = validateEmail(email);
@@ -121,19 +125,19 @@ export default function LoginScreen() {
         return;
       }
 
-      // Save userId to AsyncStorage
+      // Save userId to AsyncStorage + Zustand
       await AsyncStorage.setItem(AUTH_STORAGE_KEY, userId);
+      setUserId(userId);
 
-      // Check if onboarding is complete on the profile
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("onboarding_complete")
-        .eq("id", userId)
-        .single();
-
-      const onboardingDone = profile?.onboarding_complete === true;
+      // Check onboarding status via lib util (no raw Supabase query here)
+      const onboardingDone = await fetchOnboardingStatus(userId);
 
       if (onboardingDone) {
+        // Persist onboarding flag so use-auth sees it on app open
+        await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+        // Fetch and persist full profile to Zustand + AsyncStorage
+        const profile = await fetchUserProfile(userId);
+        await setUserProfile(profile);
         router.replace("/(tabs)");
       } else {
         router.replace("/(onboarding)");

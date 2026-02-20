@@ -9,6 +9,7 @@ import {
 
 import { FeedFilter, scorePosts, sortByTrending } from "@/lib/posts";
 import { Post } from "@/lib/supabase";
+import { useAppStore } from "@/store/appStore";
 import { ContentCard, ContentCardSkeleton } from "./ContentCard";
 import { HeroCard, HeroCardSkeleton } from "./HeroCard";
 import { ProductCard, ProductCardSkeleton } from "./ProductCard";
@@ -27,11 +28,6 @@ interface FeedGridProps {
   filter: FeedFilter;
 }
 
-const USER_PROFILE = {
-  beauty_vibe: "natural",
-  favorite_brands: ["charlotte tilbury", "fenty", "glossier"],
-};
-
 export function FeedGrid({
   posts,
   isLoading,
@@ -42,6 +38,11 @@ export function FeedGrid({
   console.log(posts);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
 
+  // Real user profile from Zustand — populated at login or by useFeedQuery
+  const userProfile = useAppStore((s) => s.userProfile) ?? {};
+
+  console.log(userProfile, "userProfile");
+
   const handleLike = useCallback((id: string) => {
     setLikedIds((prev) => new Set(prev).add(id));
   }, []);
@@ -50,7 +51,7 @@ export function FeedGrid({
     if (!posts.length) return [];
     switch (filter) {
       case "For You":
-        return scorePosts(posts, USER_PROFILE);
+        return scorePosts(posts, userProfile);
       case "Trending":
         return sortByTrending(posts);
       case "Your Routine":
