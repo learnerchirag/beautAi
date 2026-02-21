@@ -15,6 +15,8 @@ module.exports = {
         "core-black": "#000000",
         "core-white": "#ffffff",
         "deep-crimson": "#a20021",
+        "deep-crimson-900": "#200007",
+        "deep-crimson-700": "#610014",
         // Greyscale
         "grey-50": "#fafafa",
         "grey-100": "#f5f5f5",

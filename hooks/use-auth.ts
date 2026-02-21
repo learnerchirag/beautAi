@@ -1,3 +1,4 @@
+import { useAppStore } from "@/store/appStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 
@@ -22,6 +23,8 @@ export function useAuth(): AuthState {
     onboardingComplete: false,
   });
 
+  const { setUserId } = useAppStore();
+
   useEffect(() => {
     (async () => {
       try {
@@ -29,6 +32,7 @@ export function useAuth(): AuthState {
           AUTH_STORAGE_KEY,
           ONBOARDING_STORAGE_KEY,
         ]);
+        setUserId(userId[1] ?? null);
         setState({
           isLoading: false,
           userId: userId[1] ?? null,

@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
 import { UserProfile } from "@/lib/profile";
+import { Message } from "@/lib/types";
 
 // ─── Storage Keys ─────────────────────────────────────────────────────────────
 
@@ -17,6 +18,9 @@ interface AppState {
   // User profile (full, from Supabase profiles table)
   userProfile: UserProfile | null;
 
+  // Chat messages
+  messages: Message[];
+
   // UI
   isLoading: boolean;
 
@@ -26,6 +30,9 @@ interface AppState {
   clearUserProfile: () => Promise<void>;
   setLoading: (loading: boolean) => void;
   logout: () => Promise<void>;
+  // Chat actions
+  setMessages: (messages: Message[]) => void;
+  addMessage: (message: Message) => void;
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -35,6 +42,7 @@ export const useAppStore = create<AppState>((set) => ({
   userId: null,
   isAuthenticated: false,
   userProfile: null,
+  messages: [],
   isLoading: false,
 
   // Actions
@@ -61,7 +69,17 @@ export const useAppStore = create<AppState>((set) => ({
   setLoading: (isLoading) => set({ isLoading }),
 
   logout: async () => {
-    set({ userId: null, isAuthenticated: false, userProfile: null });
+    set({
+      userId: null,
+      isAuthenticated: false,
+      userProfile: null,
+      messages: [],
+    });
     await AsyncStorage.removeItem(PROFILE_STORAGE_KEY);
   },
+
+  // Chat actions
+  setMessages: (messages) => set({ messages }),
+  addMessage: (message) =>
+    set((state) => ({ messages: [...state.messages, message] })),
 }));
