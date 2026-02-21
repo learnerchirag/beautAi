@@ -15,6 +15,60 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+// ─── Likes ──────────────────────────────────────────────────────────────────
+
+export interface UserLike {
+  id: string;
+  user_id: string;
+  post_id: string;
+  created_at: string;
+}
+
+/**
+ * Returns the list of post IDs liked by the given user.
+ */
+export async function fetchUserLikes(userId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("user_likes")
+    .select("post_id")
+    .eq("user_id", userId);
+
+  if (error) throw error;
+  return (data ?? []).map((row) => row.post_id as string);
+}
+
+/**
+ * Toggles the like state for the current user on a given post.
+ * - If the row already exists it is deleted (unlike).
+ * - If it does not exist it is inserted (like).
+ * Returns `true` when the post is now liked, `false` when unliked.
+ */
+export async function togglePostLike(
+  userId: string,
+  postId: string,
+  isCurrentlyLiked: boolean,
+): Promise<boolean> {
+  if (isCurrentlyLiked) {
+    // Unlike – remove the row
+    const { error } = await supabase
+      .from("user_likes")
+      .delete()
+      .eq("user_id", userId)
+      .eq("post_id", postId);
+
+    if (error) throw error;
+    return false;
+  } else {
+    // Like – insert a new row
+    const { error } = await supabase
+      .from("user_likes")
+      .insert({ user_id: userId, post_id: postId });
+
+    if (error) throw error;
+    return true;
+  }
+}
+
 // ─── Posts ───────────────────────────────────────────────────────────────────
 
 export interface Post {

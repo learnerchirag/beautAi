@@ -1,19 +1,23 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { FeedGrid } from "@/components/feed/FeedGrid";
 import { FilterChips } from "@/components/feed/FilterChips";
-import { FeedFilter, useFeedQuery } from "@/lib/posts";
+import { FeedFilter, useFeedQuery, useUserLikesQuery } from "@/lib/posts";
 
 export default function HomeScreen() {
   const [selectedFilter, setSelectedFilter] = useState<FeedFilter>("For You");
 
   const { data: posts = [], isLoading, refetch, isRefetching } = useFeedQuery();
+  const { data: likedPostIds = [], refetch: refetchLikes } =
+    useUserLikesQuery();
+  const likedSet = useMemo(() => new Set(likedPostIds), [likedPostIds]);
 
   const handleRefresh = useCallback(() => {
     refetch();
-  }, [refetch]);
+    refetchLikes();
+  }, [refetch, refetchLikes]);
 
   return (
     <SafeAreaView className="flex-1 bg-core-white" edges={["top"]}>
@@ -28,6 +32,7 @@ export default function HomeScreen() {
           isRefreshing={isRefetching}
           onRefresh={handleRefresh}
           filter={selectedFilter}
+          likedSet={likedSet}
         />
       </View>
     </SafeAreaView>

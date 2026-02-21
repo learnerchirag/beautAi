@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { Pressable, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -8,16 +8,23 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
+import { BagIcon } from "@/assets/icons/BagIcon";
+import HeartIcon from "@/assets/icons/HeartIcon";
 import { Post } from "@/lib/supabase";
 
 interface ProductCardProps {
   post: Post;
   width?: number;
+  isLiked?: boolean;
   onLike?: (id: string) => void;
 }
 
-export function ProductCard({ post, width, onLike }: ProductCardProps) {
-  const [liked, setLiked] = useState(false);
+export function ProductCard({
+  post,
+  width,
+  isLiked = false,
+  onLike,
+}: ProductCardProps) {
   const heartScale = useSharedValue(0);
   const lastTap = useRef<number>(0);
 
@@ -29,20 +36,18 @@ export function ProductCard({ post, width, onLike }: ProductCardProps) {
   const handleDoubleTap = () => {
     const now = Date.now();
     if (now - lastTap.current < 350) {
-      if (!liked) {
-        setLiked(true);
-        onLike?.(post.id);
+      onLike?.(post.id);
+      // Show heart animation when liking (not when unliking)
+      if (!isLiked) {
+        heartScale.value = withSequence(
+          withTiming(1.4, { duration: 200 }),
+          withTiming(1, { duration: 100 }),
+          withTiming(0, { duration: 300 }),
+        );
       }
-      heartScale.value = withSequence(
-        withTiming(1.4, { duration: 200 }),
-        withTiming(1, { duration: 100 }),
-        withTiming(0, { duration: 300 }),
-      );
     }
     lastTap.current = now;
   };
-
-  console.log(post.image_url);
 
   return (
     <Pressable
@@ -58,9 +63,14 @@ export function ProductCard({ post, width, onLike }: ProductCardProps) {
           contentFit="cover"
           transition={300}
         />
+        {isLiked && (
+          <View className="absolute top-3 left-3">
+            <HeartIcon width={20} height={20} color="#610014" />
+          </View>
+        )}
         {/* Bag icon — top right, creamy vanilla bg, blurred */}
         <View className="absolute top-3 right-2 bg-creamy-vanilla p-1 rounded-sm items-center justify-center">
-          <Text className="text-[10px]">🛍</Text>
+          <BagIcon width={12} height={12} color="#000" />
         </View>
         {/* Heart animation overlay */}
         <Animated.Text

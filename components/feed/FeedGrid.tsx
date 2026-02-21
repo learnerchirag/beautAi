@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import {
   Dimensions,
   RefreshControl,
@@ -7,7 +7,13 @@ import {
   View,
 } from "react-native";
 
-import { FeedFilter, scorePosts, sortByTrending } from "@/lib/posts";
+import {
+  FeedFilter,
+  scorePosts,
+  sortByTrending,
+  useToggleLikeMutation,
+  useUserLikesQuery,
+} from "@/lib/posts";
 import { Post } from "@/lib/supabase";
 import { useAppStore } from "@/store/appStore";
 import { ContentCard, ContentCardSkeleton } from "./ContentCard";
@@ -35,17 +41,20 @@ export function FeedGrid({
   onRefresh,
   filter,
 }: FeedGridProps) {
-  console.log(posts);
-  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  // ── Likes ──────────────────────────────────────────────────────────────────
+  const { data: likedPostIds = [] } = useUserLikesQuery();
+  const likedSet = useMemo(() => new Set(likedPostIds), [likedPostIds]);
+  const { mutate: toggleLike } = useToggleLikeMutation();
 
-  // Real user profile from Zustand — populated at login or by useFeedQuery
+  const handleLike = useCallback(
+    (postId: string) => {
+      toggleLike({ postId, isLiked: likedSet.has(postId) });
+    },
+    [toggleLike, likedSet],
+  );
+
+  // ── User profile (for scoring) ─────────────────────────────────────────────
   const userProfile = useAppStore((s) => s.userProfile) ?? {};
-
-  console.log(userProfile, "userProfile");
-
-  const handleLike = useCallback((id: string) => {
-    setLikedIds((prev) => new Set(prev).add(id));
-  }, []);
 
   const sortedPosts = useMemo(() => {
     if (!posts.length) return [];
@@ -141,6 +150,7 @@ export function FeedGrid({
               key={post.id}
               post={post}
               width={LEFT_COL_WIDTH}
+              isLiked={likedSet.has(post.id)}
               onLike={handleLike}
             />
           ))}
@@ -153,6 +163,7 @@ export function FeedGrid({
               key={post.id}
               post={post}
               width={RIGHT_COL_WIDTH}
+              isLiked={likedSet.has(post.id)}
               onLike={handleLike}
             />
           ))}

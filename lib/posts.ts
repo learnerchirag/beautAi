@@ -1,10 +1,15 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { AUTH_STORAGE_KEY } from "@/hooks/use-auth";
 import { useAppStore } from "@/store/appStore";
 import { fetchUserProfile } from "./profile";
-import { fetchPostsFeed, Post } from "./supabase";
+import {
+  fetchPostsFeed,
+  fetchUserLikes,
+  Post,
+  togglePostLike,
+} from "./supabase";
 
 // ─── Feed Filters ─────────────────────────────────────────────────────────────
 
@@ -62,9 +67,81 @@ export function sortByTrending(posts: Post[]): Post[] {
   return [...posts].sort((a, b) => b.like_count - a.like_count);
 }
 
-// ─── TanStack Query Hook ──────────────────────────────────────────────────────
+// ─── Query Keys ───────────────────────────────────────────────────────────────
 
 export const POSTS_QUERY_KEY = ["posts", "feed"] as const;
+export const USER_LIKES_QUERY_KEY = ["posts", "user-likes"] as const;
+
+// ─── User Likes Query ─────────────────────────────────────────────────────────
+
+/**
+ * Fetches the set of post IDs liked by the currently logged-in user.
+ * Returns an empty array when no user is authenticated.
+ */
+export function useUserLikesQuery() {
+  return useQuery({
+    queryKey: USER_LIKES_QUERY_KEY,
+    queryFn: async (): Promise<string[]> => {
+      const userId = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
+      if (!userId) return [];
+      return fetchUserLikes(userId);
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+// ─── Toggle Like Mutation ─────────────────────────────────────────────────────
+
+/**
+ * Optimistically toggles the like state for a post.
+ * Updates the USER_LIKES_QUERY_KEY cache immediately, then syncs with Supabase.
+ * On error the cache is rolled back to its previous state.
+ */
+export function useToggleLikeMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      postId,
+      isLiked,
+    }: {
+      postId: string;
+      isLiked: boolean;
+    }) => {
+      const userId = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
+      if (!userId) throw new Error("Not authenticated");
+      return togglePostLike(userId, postId, isLiked);
+    },
+
+    // Optimistic update
+    onMutate: async ({ postId, isLiked }) => {
+      await queryClient.cancelQueries({ queryKey: USER_LIKES_QUERY_KEY });
+      const previous = queryClient.getQueryData<string[]>(USER_LIKES_QUERY_KEY);
+
+      queryClient.setQueryData<string[]>(USER_LIKES_QUERY_KEY, (old = []) => {
+        return isLiked
+          ? old.filter((id) => id !== postId) // unlike
+          : [...old, postId]; // like
+      });
+
+      return { previous };
+    },
+
+    // Roll back on error
+    onError: (_err, _vars, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(USER_LIKES_QUERY_KEY, context.previous);
+      }
+    },
+
+    // Always sync from server after settle
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: USER_LIKES_QUERY_KEY });
+    },
+  });
+}
+
+// ─── Feed Query ───────────────────────────────────────────────────────────────
 
 /**
  * Fetches the post feed and — if the Zustand store doesn't yet have a
