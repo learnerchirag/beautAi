@@ -1,42 +1,49 @@
-import { Ionicons } from "@expo/vector-icons";
+import ChatIcon from "@/assets/icons/ChatIcon";
+import Home from "@/assets/icons/Home";
+import SearchIcon from "@/assets/icons/SearchIcon";
+import Wishlist from "@/assets/icons/Wishlist";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useEffect, useMemo } from "react";
-import { Platform, Pressable, StyleSheet, Text } from "react-native";
+import { Platform, Pressable, StyleSheet } from "react-native";
 import Animated, {
-    Easing,
-    interpolateColor,
-    useAnimatedStyle,
-    useSharedValue,
-    withTiming,
+  Easing,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type TabConfig = {
   name: string;
   label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  iconActive: keyof typeof Ionicons.glyphMap;
+  icon: (color: string) => React.ReactNode;
 };
 
 const TABS: TabConfig[] = [
-  { name: "index", label: "Home", icon: "home-outline", iconActive: "home" },
+  {
+    name: "index",
+    label: "Home",
+    icon: (color = "bg-grey-300") => <Home color={color} />,
+  },
   {
     name: "search",
     label: "Search",
-    icon: "search-outline",
-    iconActive: "search",
+    icon: (color = "bg-grey-300") => <SearchIcon color={color} />,
   },
   {
     name: "saved",
     label: "Saved",
-    icon: "bookmark-outline",
-    iconActive: "bookmark",
+    icon: (color = "bg-grey-300") => (
+      <Wishlist width={24} height={24} color={color} />
+    ),
   },
   {
     name: "chat",
     label: "Chat",
-    icon: "chatbubble-outline",
-    iconActive: "chatbubble",
+    icon: (color = "bg-grey-300") => (
+      <ChatIcon width={24} height={24} color={color} />
+    ),
   },
 ];
 
@@ -46,6 +53,7 @@ const ICON_TEAL = "#008080";
 const ICON_GREY = "#bdbdbd";
 const ICON_WHITE = "#ffffff";
 const ICON_GREY_DARK = "rgba(255,255,255,0.4)";
+const ICON_BLACK = "#000000";
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -118,7 +126,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             ? ICON_WHITE
             : ICON_GREY_DARK
           : isActive
-            ? ICON_TEAL
+            ? ICON_BLACK
             : ICON_GREY;
 
         return (
@@ -130,17 +138,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             accessibilityState={{ selected: isActive }}
             accessibilityLabel={options.title ?? tab.label}
           >
-            <Ionicons
-              name={isActive ? tab.iconActive : tab.icon}
-              size={24}
-              color={iconColor}
-            />
-            <Text
-              style={[styles.label, { color: iconColor }]}
-              numberOfLines={1}
-            >
-              {tab.label}
-            </Text>
+            {tab.icon(iconColor)}
           </Pressable>
         );
       })}

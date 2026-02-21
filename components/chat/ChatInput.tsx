@@ -1,5 +1,7 @@
+import { Ionicons } from "@expo/vector-icons";
 import React, { useRef, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { TextInput, View } from "react-native";
+import { ActionButton } from "../buttons/ActionButton";
 
 interface ChatInputProps {
   onSend: (text: string) => void;
@@ -21,7 +23,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
 
   return (
     <View className="px-4 py-3 bg-deep-crimson-900">
-      <View className="flex-row items-end bg-deep-crimson-900 border border-creamy-vanilla rounded-xs p-3 gap-2">
+      <View className="flex-row items-center bg-deep-crimson-900 border border-creamy-vanilla rounded-xs p-3 gap-2">
         <TextInput
           ref={inputRef}
           className="flex-1 font-josefin-regular text-body-md text-white min-h-[20px] max-h-[100px] pt-0 pb-0"
@@ -35,7 +37,22 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
           multiline
           maxLength={1000}
         />
-        <Pressable
+        <ActionButton
+          onPress={handleSend}
+          suffixIcon={
+            <Ionicons
+              name="send"
+              size={12}
+              color={canSend ? "white" : "#e0e0e0"}
+            />
+          }
+          disabled={!canSend}
+          containerClassName={`rounded-full items-center justify-center px-2 py-2 self-end ${
+            canSend ? "bg-creamy-vanilla" : "bg-white/15"
+          }`}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        />
+        {/* <Pressable
           onPress={handleSend}
           disabled={!canSend}
           style={({ pressed }) => [{ opacity: pressed && canSend ? 0.8 : 1 }]}
@@ -51,7 +68,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
           >
             ↑
           </Text>
-        </Pressable>
+        </Pressable> */}
       </View>
     </View>
   );

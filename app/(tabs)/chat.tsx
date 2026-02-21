@@ -1,3 +1,5 @@
+import { ActionButton } from "@/components/buttons/ActionButton";
+import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -65,6 +67,31 @@ export default function ChatScreen() {
   const [streamingText, setStreamingText] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const listRef = useRef<FlatList>(null);
+
+  // ── Scroll-to-bottom button ───────────────────────────────────────────────
+  const scrollOffset = useRef(0);
+  const contentHeight = useRef(0);
+  const layoutHeight = useRef(0);
+  const showScrollBtn = useSharedValue(0); // 0 = hidden, 1 = visible
+
+  const checkScrollPosition = useCallback(() => {
+    const distanceFromBottom =
+      contentHeight.current - layoutHeight.current - scrollOffset.current;
+    // Show button when more than 80px from the bottom
+    showScrollBtn.value = withTiming(distanceFromBottom > 80 ? 1 : 0, {
+      duration: 200,
+    });
+  }, [showScrollBtn]);
+
+  const scrollBtnStyle = useAnimatedStyle(() => ({
+    opacity: showScrollBtn.value,
+    transform: [{ scale: 0.7 + 0.3 * showScrollBtn.value }],
+    pointerEvents: showScrollBtn.value > 0.5 ? "auto" : "none",
+  }));
+
+  const scrollToBottom = useCallback(() => {
+    listRef.current?.scrollToEnd({ animated: true });
+  }, []);
 
   const { userId, userProfile, messages, addMessage, setMessages } =
     useAppStore();
@@ -318,7 +345,35 @@ export default function ChatScreen() {
               contentContainerClassName="pt-4 pb-2"
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={<SuggestedQuestions onSelect={handleSend} />}
+              onScroll={(e) => {
+                scrollOffset.current = e.nativeEvent.contentOffset.y;
+                checkScrollPosition();
+              }}
+              onContentSizeChange={(_w, h) => {
+                contentHeight.current = h;
+                checkScrollPosition();
+              }}
+              onLayout={(e) => {
+                layoutHeight.current = e.nativeEvent.layout.height;
+                checkScrollPosition();
+              }}
+              scrollEventThrottle={16}
             />
+
+            {/* Scroll-to-bottom button */}
+            <Animated.View
+              style={scrollBtnStyle}
+              className="absolute bottom-20 right-4"
+            >
+              <ActionButton
+                text=""
+                suffixIcon={
+                  <Ionicons name="arrow-down" size={18} color="#ffffff" />
+                }
+                onPress={scrollToBottom}
+                containerClassName="w-10 h-10 rounded-full px-0 justify-center items-center"
+              />
+            </Animated.View>
 
             <ChatInput onSend={handleSend} disabled={isSending} />
           </KeyboardAvoidingView>

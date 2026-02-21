@@ -77,7 +77,7 @@ export function FeedGrid({
   if (isLoading) {
     return (
       <ScrollView
-        contentContainerClassName="pb-8"
+        contentContainerClassName="pb-8 pt-2"
         showsVerticalScrollIndicator={false}
       >
         <View className="mb-4">

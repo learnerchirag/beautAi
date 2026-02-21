@@ -1,3 +1,4 @@
+import * as Haptics from "expo-haptics";
 import React from "react";
 import { ActivityIndicator, Pressable, Text } from "react-native";
 
@@ -16,9 +17,14 @@ export function PrimaryButton({
 }: PrimaryButtonProps) {
   const isDisabled = disabled || loading;
 
+  const onPressHandler = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onPress();
+  };
+
   return (
     <Pressable
-      onPress={onPress}
+      onPress={onPressHandler}
       disabled={isDisabled}
       style={({ pressed }) => ({ opacity: pressed || isDisabled ? 0.7 : 1 })}
       className="bg-deep-crimson rounded-sm h-12 items-center justify-center px-4"
