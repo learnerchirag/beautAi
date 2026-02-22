@@ -39,7 +39,7 @@ export function TextInput({
         }`}
       >
         <RNTextInput
-          className="flex-1 font-josefin-regular text-body-md text-core-black tracking-[-0.35px]"
+          className="flex-1 font-josefin-regular text-body-md text-core-black tracking-[-0.35px] py-1"
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -48,6 +48,7 @@ export function TextInput({
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           autoCorrect={false}
+          placeholderClassName="text-body-md"
         />
         {rightElement}
       </View>

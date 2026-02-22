@@ -15,6 +15,7 @@ import { SecondaryButton } from "@/components/buttons/SecondaryButton";
 import { TextButton } from "@/components/buttons/TextButton";
 import { TextInput } from "@/components/inputs/TextInput";
 
+import EyeIcon from "@/assets/icons/EyeIcon";
 import { AUTH_STORAGE_KEY, ONBOARDING_STORAGE_KEY } from "@/hooks/use-auth";
 import { fetchUserProfile } from "@/lib/profile";
 import { fetchOnboardingStatus, supabase } from "@/lib/supabase";
@@ -38,24 +39,12 @@ function validatePassword(value: string): string | null {
 
 // ─── Eye icon (show/hide password) ────────────────────────────────────────────
 
-function EyeIcon({ visible }: { visible: boolean }) {
+function EyeIconWrapper({ visible }: { visible: boolean }) {
   return (
     <View className="w-4 h-4 items-center justify-center">
-      {visible ? (
-        // Eye open
-        <View className="w-4 h-4 items-center justify-center">
-          <View className="w-full h-[8px] rounded-full border border-core-black overflow-hidden items-center justify-center">
-            <View className="w-[6px] h-[6px] rounded-full bg-core-black" />
-          </View>
-        </View>
-      ) : (
-        // Eye closed – strikethrough line
-        <View className="w-full h-4 items-center justify-center">
-          <View className="w-full h-[8px] rounded-full border border-core-black overflow-hidden items-center justify-center">
-            <View className="w-[6px] h-[6px] rounded-full bg-core-black" />
-          </View>
-          <View className="absolute w-full h-[1.5px] bg-core-black rotate-45" />
-        </View>
+      <EyeIcon width={16} height={16} fill="#000" />
+      {!visible && (
+        <View className="absolute w-full h-[1.5px] bg-core-black rotate-45" />
       )}
     </View>
   );
@@ -185,11 +174,10 @@ export default function LoginScreen() {
                 setEmail(v);
                 if (emailError) setEmailError(validateEmail(v));
               }}
-              placeholder="xyz@email.com"
+              placeholder="xygz@email.com"
               error={emailError}
               keyboardType="email-address"
               autoCapitalize="none"
-              rightElement={<ChevronDownIcon />}
             />
 
             {/* Password */}
@@ -208,7 +196,7 @@ export default function LoginScreen() {
                   onPress={() => setShowPassword((prev) => !prev)}
                   hitSlop={8}
                 >
-                  <EyeIcon visible={showPassword} />
+                  <EyeIconWrapper visible={showPassword} />
                 </Pressable>
               }
             />
