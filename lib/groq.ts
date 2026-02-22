@@ -1,6 +1,6 @@
-const GROQ_API_KEY = "***REMOVED***";
-const GROQ_BASE_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL = "llama-3.1-8b-instant";
+const GROQ_API_KEY = process.env.GROQ_API_KEY ?? ""
+const GROQ_BASE_URL = process.env.GROQ_BASE_URL ?? ""
+const GROQ_MODEL = process.env.GROQ_MODEL ?? ""
 
 export interface GroqMessage {
   role: "system" | "user" | "assistant";

@@ -45,3 +45,4 @@ app-example
 
 # editor files
 .agent
+.env
