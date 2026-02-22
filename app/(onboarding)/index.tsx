@@ -96,7 +96,7 @@ export default function OnboardingScreen() {
       <View
         style={{
           flex: 1,
-          paddingHorizontal: 16,
+          paddingHorizontal: 8,
           paddingTop: 8,
           justifyContent: "flex-end",
           marginBottom: 12,
