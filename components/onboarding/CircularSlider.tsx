@@ -1,13 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
-    runOnJS,
-    useAnimatedStyle,
-    useSharedValue
+  runOnJS,
+  useAnimatedProps,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
 } from "react-native-reanimated";
 import Svg, { Circle, Path } from "react-native-svg";
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const RADIUS = 120;
 const STROKE_WIDTH = 12;
@@ -69,6 +74,7 @@ function getTimeRange(minutes: number): TimeRange {
 }
 
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
+  "worklet";
   const rad = ((angleDeg - 90) * Math.PI) / 180;
   return {
     x: cx + r * Math.cos(rad),
@@ -83,6 +89,7 @@ function describeArc(
   startAngle: number,
   endAngle: number,
 ): string {
+  "worklet";
   const start = polarToCartesian(cx, cy, r, endAngle);
   const end = polarToCartesian(cx, cy, r, startAngle);
   const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
@@ -108,8 +115,32 @@ export default function CircularSlider({
   const arcPath =
     angleDeg > 0 ? describeArc(CENTER, CENTER, RADIUS, 0, angleDeg) : "";
 
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
+  const introAngle = useSharedValue(0);
+  const introOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (value !== 0) return;
+    // Start with opacity 1, animate angle to 360, then fade out
+    introOpacity.value = withSequence(
+      withTiming(1, { duration: 800 }),
+      withTiming(0, { duration: 500 }),
+    );
+    introAngle.value = withSequence(
+      withTiming(360, { duration: 800 }),
+      withTiming(0, { duration: 500 }),
+    );
+  }, [introAngle, introOpacity, value]);
+
+  const introProps = useAnimatedProps(() => {
+    const d =
+      introAngle.value > 0
+        ? describeArc(CENTER, CENTER, RADIUS, 0, introAngle.value)
+        : "";
+    return {
+      d,
+      opacity: introOpacity.value,
+    };
+  });
 
   const updateMinutes = useCallback(
     (mins: number) => {
@@ -169,6 +200,15 @@ export default function CircularSlider({
                 strokeLinecap="round"
               />
             ) : null}
+
+            {/* Intro animation arc (dummy) */}
+            <AnimatedPath
+              animatedProps={introProps}
+              stroke="#008080"
+              strokeWidth={STROKE_WIDTH}
+              fill="none"
+              strokeLinecap="round"
+            />
           </Svg>
 
           {/* Thumb */}
@@ -240,6 +280,16 @@ export default function CircularSlider({
           </View>
         </View>
       </GestureDetector>
+      <Text
+        className="text-center text-core-black mt-4 opacity-50 absolute bottom-0"
+        style={{
+          fontFamily: "JosefinSans_600SemiBold",
+          fontSize: 12,
+          letterSpacing: -0.3,
+        }}
+      >
+        Slide to save
+      </Text>
     </View>
   );
 }

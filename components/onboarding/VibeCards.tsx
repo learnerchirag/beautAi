@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useState } from "react";
 import { Dimensions, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -81,79 +82,109 @@ export default function VibeCards({ selected, onSelect }: VibeCardsProps) {
                   vibe={vibe}
                   onSwipeRight={() => handleSwipedRight(vibe.name)}
                   onSwipeLeft={handleSwipedLeft}
+                  onSelect={() => onSelect(vibe.name)}
                   isSelected={selected === vibe.name}
                 />
               );
             }
 
             return (
-              <View
+              <VibeCard
                 key={vibe.name}
-                style={{
-                  position: "absolute",
-                  width: CARD_WIDTH,
-                  height: CARD_HEIGHT,
-                  borderRadius: 32,
-                  overflow: "hidden",
-                  transform: [
-                    { scale: 1 - stackIndex * 0.04 },
-                    { translateX: stackIndex * 12 },
-                  ],
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 24 },
-                  shadowOpacity: 0.12,
-                  shadowRadius: 32,
-                  elevation: 10 - stackIndex * 3,
-                }}
-              >
-                <Image
-                  source={vibe.image}
-                  style={{ width: "100%", height: "100%" }}
-                  contentFit="cover"
-                />
-                <View
-                  style={{
-                    position: "absolute",
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: 180,
-                    backgroundColor: "transparent",
-                  }}
-                />
-                <Text
-                  style={{
-                    position: "absolute",
-                    bottom: 46,
-                    alignSelf: "center",
-                    fontFamily: "JosefinSans_700Bold",
-                    fontSize: 40,
-                    letterSpacing: -1.6,
-                    color: "#fff",
-                    textAlign: "center",
-                  }}
-                >
-                  {vibe.name}
-                </Text>
-              </View>
+                vibe={vibe}
+                stackIndex={stackIndex}
+                isSelected={selected === vibe.name}
+              />
             );
           })}
       </View>
+    </View>
+  );
+}
 
-      {/* Vibe dots indicator */}
-      <View style={{ flexDirection: "row", gap: 6, marginTop: 16 }}>
-        {VIBES.map((v, i) => (
-          <View
-            key={v.name}
+interface VibeCardProps {
+  vibe: Vibe;
+  isSelected: boolean;
+  stackIndex?: number;
+}
+
+function VibeCard({ vibe, isSelected, stackIndex = 0 }: VibeCardProps) {
+  return (
+    <View
+      style={{
+        position: "absolute",
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
+        borderRadius: 32,
+        overflow: "hidden",
+        transform:
+          stackIndex > 0
+            ? [
+                { scale: 1 - stackIndex * 0.04 },
+                { translateX: stackIndex * 12 },
+              ]
+            : [],
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 24 },
+        shadowOpacity: 0.12,
+        shadowRadius: 32,
+        elevation: stackIndex > 0 ? 10 - stackIndex * 3 : 12,
+        backgroundColor: "#fff", // Ensure card has a background
+      }}
+    >
+      <Image
+        source={vibe.image}
+        style={{ width: "100%", height: "100%" }}
+        contentFit="cover"
+      />
+      <LinearGradient
+        colors={["transparent", "rgba(0,0,0,0.5)"]}
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          minHeight: CARD_HEIGHT * 0.2,
+          justifyContent: "flex-end",
+          paddingBottom: 46,
+        }}
+      >
+        <Text
+          style={{
+            alignSelf: "center",
+            fontFamily: "JosefinSans_700Bold",
+            fontSize: 40,
+            letterSpacing: -1.6,
+            color: "#fff",
+            textAlign: "center",
+          }}
+        >
+          {vibe.name}
+        </Text>
+      </LinearGradient>
+      {isSelected && (
+        <View
+          style={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            backgroundColor: "#008080",
+            borderRadius: 20,
+            paddingHorizontal: 12,
+            paddingVertical: 4,
+          }}
+        >
+          <Text
             style={{
-              width: i === currentIndex ? 16 : 6,
-              height: 6,
-              borderRadius: 3,
-              backgroundColor: i === currentIndex ? "#008080" : "#eeeeee",
+              fontFamily: "JosefinSans_600SemiBold",
+              fontSize: 11,
+              color: "#fff",
             }}
-          />
-        ))}
-      </View>
+          >
+            ✓ Selected
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -162,11 +193,13 @@ function SwipeableCard({
   vibe,
   onSwipeRight,
   onSwipeLeft,
+  onSelect,
   isSelected,
 }: {
   vibe: Vibe;
   onSwipeRight: () => void;
   onSwipeLeft: () => void;
+  onSelect: () => void;
   isSelected: boolean;
 }) {
   const translateX = useSharedValue(0);
@@ -182,12 +215,12 @@ function SwipeableCard({
     })
     .onEnd((e) => {
       if (e.translationX > SWIPE_THRESHOLD) {
-        // Swipe right — select
+        // Swipe right — select AND complete/remove from stack
         translateX.value = withTiming(SCREEN_WIDTH, { duration: 300 });
         opacity.value = withTiming(0, { duration: 300 });
         runOnJS(onSwipeRight)();
       } else if (e.translationX < -SWIPE_THRESHOLD) {
-        // Swipe left — skip
+        // Swipe left — skip/remove from stack
         translateX.value = withTiming(-SCREEN_WIDTH, { duration: 300 });
         opacity.value = withTiming(0, { duration: 300 });
         runOnJS(onSwipeLeft)();
@@ -200,13 +233,11 @@ function SwipeableCard({
     });
 
   const tapGesture = Gesture.Tap().onEnd(() => {
-    // Tap — treat as swipe right (select)
-    translateX.value = withTiming(SCREEN_WIDTH, { duration: 300 });
-    opacity.value = withTiming(0, { duration: 300 });
-    runOnJS(onSwipeRight)();
+    // Tap — only select, do not swipe or remove
+    runOnJS(onSelect)();
   });
 
-  const gesture = Gesture.Race(tapGesture, panGesture);
+  const gesture = Gesture.Simultaneous(tapGesture, panGesture);
 
   const cardStyle = useAnimatedStyle(() => ({
     transform: [
@@ -219,77 +250,8 @@ function SwipeableCard({
 
   return (
     <GestureDetector gesture={gesture}>
-      <Animated.View
-        style={[
-          cardStyle,
-          {
-            position: "absolute",
-            width: CARD_WIDTH,
-            height: CARD_HEIGHT,
-            borderRadius: 32,
-            overflow: "hidden",
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 24 },
-            shadowOpacity: 0.12,
-            shadowRadius: 32,
-            elevation: 12,
-          },
-        ]}
-      >
-        <Image
-          source={vibe.image}
-          style={{ width: "100%", height: "100%" }}
-          contentFit="cover"
-        />
-        {/* Gradient overlay */}
-        <View
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 200,
-            // Simulated gradient using opacity layers
-            backgroundColor: "rgba(0,0,0,0.32)",
-          }}
-        />
-        <Text
-          style={{
-            position: "absolute",
-            bottom: 46,
-            alignSelf: "center",
-            fontFamily: "JosefinSans_700Bold",
-            fontSize: 40,
-            letterSpacing: -1.6,
-            color: "#fff",
-            textAlign: "center",
-          }}
-        >
-          {vibe.name}
-        </Text>
-        {isSelected && (
-          <View
-            style={{
-              position: "absolute",
-              top: 12,
-              right: 12,
-              backgroundColor: "#008080",
-              borderRadius: 20,
-              paddingHorizontal: 12,
-              paddingVertical: 4,
-            }}
-          >
-            <Text
-              style={{
-                fontFamily: "JosefinSans_600SemiBold",
-                fontSize: 11,
-                color: "#fff",
-              }}
-            >
-              ✓ Selected
-            </Text>
-          </View>
-        )}
+      <Animated.View style={cardStyle}>
+        <VibeCard vibe={vibe} isSelected={isSelected} />
       </Animated.View>
     </GestureDetector>
   );

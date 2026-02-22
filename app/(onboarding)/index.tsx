@@ -6,14 +6,19 @@ import StepHeader from "@/components/onboarding/StepHeader";
 import VibeCards from "@/components/onboarding/VibeCards";
 import XPBadge from "@/components/onboarding/XPBadge";
 import { router } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
-import { SafeAreaView, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Dimensions, SafeAreaView, View } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { runOnJS } from "react-native-reanimated";
 
 const TOTAL_STEPS = 3;
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.2;
 
 const STEP_TITLES = ["Brands I love", "My routine time", "My vibe"];
 
 const STEP_XP = [10, 30, 40];
+const STEP_XP_TOTAL = 80;
 
 function getRoutineLabel(minutes: number): string {
   if (minutes <= 5) return "0-5";
@@ -75,6 +80,28 @@ export default function OnboardingScreen() {
     }
   }, [currentStep, handleNext, selectedBrands, routineMinutes, selectedVibe]);
 
+  const swipeGesture = Gesture.Pan()
+    .activeOffsetX([-20, 20]) // Require 20px of horizontal movement to activate
+    .onEnd((e) => {
+      if (e.translationX < -SWIPE_THRESHOLD) {
+        // Swipe left -> Next
+        if (currentStep < TOTAL_STEPS) {
+          runOnJS(handleNext)();
+        }
+      } else if (e.translationX > SWIPE_THRESHOLD) {
+        // Swipe right -> Prev
+        if (currentStep > 1) {
+          runOnJS(handlePrev)();
+        }
+      }
+    });
+
+  useEffect(() => {
+    if (totalXP >= STEP_XP_TOTAL && currentStep === TOTAL_STEPS) {
+      handleSubmit();
+    }
+  }, [totalXP, currentStep]);
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <View style={{ paddingHorizontal: 16, paddingTop: 8, gap: 12 }}>
@@ -93,28 +120,34 @@ export default function OnboardingScreen() {
         )}
       </View>
 
-      <View
-        style={{
-          flex: 1,
-          paddingHorizontal: 8,
-          paddingTop: 8,
-          justifyContent: "flex-end",
-          marginBottom: 12,
-        }}
-      >
-        {currentStep === 1 && (
-          <BubbleCluster
-            selected={selectedBrands}
-            onToggle={handleToggleBrand}
-          />
-        )}
-        {currentStep === 2 && (
-          <CircularSlider value={routineMinutes} onChange={setRoutineMinutes} />
-        )}
-        {currentStep === 3 && (
-          <VibeCards selected={selectedVibe} onSelect={setSelectedVibe} />
-        )}
-      </View>
+      <GestureDetector gesture={swipeGesture}>
+        <View
+          style={{
+            flex: 1,
+            paddingHorizontal: 4,
+            paddingTop: 8,
+            justifyContent: "flex-end",
+            marginBottom: 12,
+            backgroundColor: "transparent", // Ensure it catches gestures
+          }}
+        >
+          {currentStep === 1 && (
+            <BubbleCluster
+              selected={selectedBrands}
+              onToggle={handleToggleBrand}
+            />
+          )}
+          {currentStep === 2 && (
+            <CircularSlider
+              value={routineMinutes}
+              onChange={setRoutineMinutes}
+            />
+          )}
+          {currentStep === 3 && (
+            <VibeCards selected={selectedVibe} onSelect={setSelectedVibe} />
+          )}
+        </View>
+      </GestureDetector>
 
       <BottomControls
         onReset={handleReset}

@@ -8,9 +8,9 @@ import {
   View,
 } from "react-native";
 // @ts-ignore
-import ConfettiCannon from "react-native-confetti-cannon";
+import LottieView from "lottie-react-native";
 
-const { width } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window");
 
 interface CompletionScreenProps {
   onLoadDashboard: () => void;
@@ -31,7 +31,7 @@ export default function Completion({
   useEffect(() => {
     // Fire confetti on mount
     setTimeout(() => {
-      confettiRef.current?.start();
+      confettiRef.current?.play();
     }, 100);
 
     // Animate elements in sequence
@@ -75,16 +75,20 @@ export default function Completion({
   return (
     <View style={styles.container}>
       {/* Confetti cannon — fires from top center */}
-      <ConfettiCannon
-        ref={confettiRef}
-        count={160}
-        origin={{ x: width / 2, y: -20 }}
-        autoStart={false}
-        fadeOut={true}
-        fallSpeed={3000}
-        explosionSpeed={350}
-        colors={["#DA99A6", "#5DBFBF", "#F5F0D8", "#E8B4BC", "#7A9E9E"]}
-      />
+      <View
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+      >
+        <LottieView
+          ref={confettiRef}
+          source={require("../../assets/lottie/Conffetti.json")}
+          style={{
+            width: width,
+            height: height,
+          }}
+          autoPlay={false}
+          loop={false}
+        />
+      </View>
 
       {/* Center content */}
       <View style={styles.centerContent}>
