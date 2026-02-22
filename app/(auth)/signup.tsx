@@ -15,6 +15,7 @@ import { TextInput } from "@/components/inputs/TextInput";
 
 import { AUTH_STORAGE_KEY } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
+import { useAppStore } from "@/store/appStore";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -51,6 +52,8 @@ export default function SignupScreen() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const { setUserId } = useAppStore();
+
   const handleSignup = async () => {
     const eErr = validateEmail(email);
     const pErr = validatePassword(password);
@@ -81,6 +84,8 @@ export default function SignupScreen() {
         setLoading(false);
         return;
       }
+
+      setUserId(userId);
 
       await AsyncStorage.setItem(AUTH_STORAGE_KEY, userId);
 
