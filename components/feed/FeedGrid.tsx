@@ -11,8 +11,7 @@ import {
   FeedFilter,
   scorePosts,
   sortByTrending,
-  useToggleLikeMutation,
-  useUserLikesQuery,
+  useToggleLikeMutation
 } from "@/lib/posts";
 import { Post } from "@/lib/supabase";
 import { useAppStore } from "@/store/appStore";
@@ -32,6 +31,7 @@ interface FeedGridProps {
   isRefreshing: boolean;
   onRefresh: () => void;
   filter: FeedFilter;
+  likedSet: Set<string>;
 }
 
 export function FeedGrid({
@@ -40,10 +40,10 @@ export function FeedGrid({
   isRefreshing,
   onRefresh,
   filter,
+  likedSet,
 }: FeedGridProps) {
   // ── Likes ──────────────────────────────────────────────────────────────────
-  const { data: likedPostIds = [] } = useUserLikesQuery();
-  const likedSet = useMemo(() => new Set(likedPostIds), [likedPostIds]);
+
   const { mutate: toggleLike } = useToggleLikeMutation();
 
   const handleLike = useCallback(

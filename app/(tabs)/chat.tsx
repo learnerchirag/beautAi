@@ -19,6 +19,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { twMerge } from "tailwind-merge";
 
 import { ChatBubble } from "@/components/chat/ChatBubble";
 import { ChatInput } from "@/components/chat/ChatInput";
@@ -306,7 +307,10 @@ export default function ChatScreen() {
         {/* Header */}
         <View className="h-12 flex-row items-center justify-between px-4 bg-deep-crimson-900">
           <Pressable
-            className={`w-8 h-8 rounded-full border border-grey-100 items-center justify-center bg-transparent ${view === "list" ? "opacity-1" : "opacity-0"}`}
+            className={twMerge(
+              "w-8 h-8 rounded-full border border-grey-100 items-center justify-center bg-transparent",
+              view === "list" ? "opacity-1" : "opacity-0"
+            )}
             onPress={() => (view === "list" ? setView("active") : undefined)}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
@@ -318,7 +322,10 @@ export default function ChatScreen() {
           </Text>
 
           <Pressable
-            className="w-8 h-8 rounded-full border border-grey-100 items-center justify-center bg-transparent"
+            className={twMerge(
+              "w-8 h-8 rounded-full border border-grey-100 items-center justify-center bg-transparent",
+              view === "list" ? "opacity-0" : "opacity-1"
+            )}
             onPress={() => setView("list")}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >

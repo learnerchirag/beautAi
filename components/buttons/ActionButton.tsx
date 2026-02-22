@@ -6,6 +6,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { twMerge } from "tailwind-merge";
 
 // Wrap Pressable with Animated so we can animate it
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -78,9 +79,9 @@ export function ActionButton({
       onPressOut={handlePressOut}
       disabled={isDisabled}
       style={animatedStyle}
-      className={`bg-deep-crimson rounded-sm flex-row items-center justify-center gap-x-2 px-4 ${
+      className={twMerge(`bg-deep-crimson rounded-sm flex-row items-center justify-center gap-x-2 px-4 ${
         isDisabled ? "opacity-60" : "opacity-100"
-      } ${containerClassName}`}
+      }`, containerClassName)}
       hitSlop={hitSlop}
     >
       {/* Loading overlay — sits on top, centred */}
@@ -96,7 +97,7 @@ export function ActionButton({
       {/* Label */}
       {text && (
         <Text
-          className={`font-josefin text-body-lg text-core-white ${textClassName}`}
+          className={twMerge("font-josefin text-body-lg text-core-white", textClassName)}
           numberOfLines={1}
         >
           {text}

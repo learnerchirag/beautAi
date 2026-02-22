@@ -1,5 +1,6 @@
 import React from "react";
 import { Text, View } from "react-native";
+import { twMerge } from "tailwind-merge";
 
 import { StreamingText } from "./StreamingText";
 
@@ -15,12 +16,16 @@ export function ChatBubble({ role, content, isStreaming }: ChatBubbleProps) {
 
   return (
     <View
-      className={`flex-row px-4 mb-1.5 ${isUser ? "justify-end" : "justify-start"}`}
+      className={twMerge(
+        "flex-row px-4 mb-1.5",
+        isUser ? "justify-end" : "justify-start"
+      )}
     >
       <View
-        className={`max-w-[75%] rounded-sm p-3 overflow-hidden ${
+        className={twMerge(
+          "max-w-[75%] rounded-sm p-3 overflow-hidden",
           isUser ? "bg-deep-crimson" : "bg-deep-crimson-700"
-        }`}
+        )}
       >
         {isStreaming ? (
           <StreamingText
